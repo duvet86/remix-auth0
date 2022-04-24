@@ -1,5 +1,4 @@
 import type { Session } from "@remix-run/server-runtime";
-import { json } from "@remix-run/server-runtime";
 import { redirect } from "@remix-run/server-runtime";
 import invariant from "tiny-invariant";
 import { v4 as uuidv4 } from "uuid";
@@ -21,6 +20,7 @@ const auth0 = {
 
 const sessionStateKey = "oauth2:state";
 const sessionKey = "user";
+const sessionTokenKey = "token";
 const userInfoURL = `https://${auth0.domain}/userinfo`;
 const scope = "openid profile email";
 const authorizationURL = `https://${auth0.domain}/authorize`;
@@ -96,10 +96,6 @@ export interface Auth0Profile extends OAuth2Profile {
   };
 }
 
-type LoaderData = {
-  user: Auth0Profile;
-};
-
 export const logout = async (request: Request) => {
   const session = await getSession(request.headers.get("Cookie"));
   const cookie = await destroySession(session);
@@ -114,15 +110,16 @@ export const logout = async (request: Request) => {
   return redirect(url.toString(), { headers: { "Set-Cookie": cookie } });
 };
 
-export const authorize = async (request: Request) => {
+export const authorize = async (
+  request: Request,
+  callback: (user: Auth0Profile) => Promise<Response>
+) => {
   const session = await getSession(request.headers.get("Cookie"));
 
   let user: Auth0Profile | null = session.get(sessionKey) ?? null;
 
   if (user !== null) {
-    return json<LoaderData>({
-      user,
-    });
+    return await callback(user);
   }
 
   const url = new URL(request.url);
@@ -153,9 +150,12 @@ export const authorize = async (request: Request) => {
 
   user = await userProfile(accessToken);
 
+  console.log(accessToken);
+
   // Because a callback was not provided, we are going to store the user data
   // on the session and commit it as a cookie.
   session.set(sessionKey, user);
+  session.set(sessionTokenKey, accessToken);
 
   const cookie = await commitSession(session);
 
