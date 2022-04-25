@@ -20,13 +20,16 @@ import { authorize } from "./services/authorize";
 import { httpGetAsync } from "./services/http";
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
-import type { Site } from "./types";
+import type { Site, UserAuthorisation } from "./types";
 
 import emptyLogo from "./empty_state.svg";
+import SideMenuNavigation from "./components/navigation/side-menu-navigation";
+import { CurrentSiteContextProvider } from "./services/current-site-context";
 
 type LoaderData = {
   user: Auth0Profile;
   sites: Site[];
+  initialSelectedSite: Site;
 };
 
 export const links: LinksFunction = () => {
@@ -41,25 +44,55 @@ export const meta: MetaFunction = () => ({
 
 export const loader: LoaderFunction = async ({ request }) => {
   return authorize(request, async (user) => {
+    const sites = await httpGetAsync<Site[]>(request, "/imt-api/sites");
+
+    const siteDictionary = sites.reduce<Record<string, Site>>((res, site) => {
+      res[site.siteId] = site;
+
+      return res;
+    }, {});
+
+    const userAuthorisation = user._json[
+      "https://mining.imdexhub.com/permissions"
+    ] as UserAuthorisation;
+
+    const siteRoles = userAuthorisation.siteRoles;
+    if (userAuthorisation == null || siteRoles.length === 0) {
+      throw new Response("Unauthorized", { status: 401 });
+    }
+
+    const userSites = userAuthorisation.siteRoles.map(
+      ({ siteId }) => siteDictionary[siteId]
+    );
+
     return json<LoaderData>({
       user,
-      sites: await httpGetAsync(request, "/imt-api/sites"),
+      sites: userSites,
+      initialSelectedSite: siteDictionary[siteRoles[0].siteId],
     });
   });
 };
 
 export default function App() {
-  const { user, sites } = useLoaderData();
+  const { user, sites, initialSelectedSite } = useLoaderData();
 
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full antialiased">
       <head>
         <Meta />
         <Links />
       </head>
-      <body className="h-full">
-        <NavigationHeader user={user} sites={sites} />
-        <Outlet />
+      <body className="flex h-full flex-col">
+        <CurrentSiteContextProvider initialSiteValue={initialSelectedSite}>
+          <NavigationHeader user={user} sites={sites} />
+          <div className="flex grow">
+            <SideMenuNavigation />
+            <main className="grow p-4">
+              <Outlet />
+            </main>
+          </div>
+        </CurrentSiteContextProvider>
+
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

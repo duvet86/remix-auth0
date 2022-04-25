@@ -4,6 +4,7 @@ module.exports = {
     extend: {
       colors: {
         "imdex-blue": "#283c8c",
+        "imdex-dark-blue": "#030f4b",
       },
     },
   },

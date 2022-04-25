@@ -3,7 +3,10 @@ import { getSession } from "./session";
 
 const BASE_URL = "https://api.mining.dev.imdexhub.com";
 
-export async function httpGetAsync(request: Request, url: string) {
+export async function httpGetAsync<T>(
+  request: Request,
+  url: string
+): Promise<T> {
   return await handleJSONResponeAsync(await handleFetch(request, url));
 }
 

@@ -1,6 +1,8 @@
 import { useMatches } from "@remix-run/react";
 import { useMemo } from "react";
+
 import type { Auth0Profile } from "./services/authorize";
+import type { Site } from "./types";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -47,12 +49,19 @@ export function useMatchesData(
 export function useUser(): Auth0Profile {
   const data = useMatchesData("root");
   if (data === undefined || !isUser(data.user)) {
-    throw new Error(
-      "No user found in root loader, but user is required by useUser. If user is optional, try useOptionalUser instead."
-    );
+    throw new Error("No user found in root loader.");
   }
 
   return data.user;
+}
+
+export function useSites(): Site[] {
+  const data = useMatchesData("root");
+  if (data === undefined || data.sites == null) {
+    throw new Error("No user found in root loader.");
+  }
+
+  return data.sites as Site[];
 }
 
 export function validateEmail(email: unknown): email is string {

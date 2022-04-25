@@ -93,6 +93,7 @@ export interface Auth0Profile extends OAuth2Profile {
       country: string;
     };
     updated_at: string;
+    [key: string]: unknown;
   };
 }
 
