@@ -1,21 +1,17 @@
-import { createCookieSessionStorage } from "@remix-run/node";
+import { createCookie, createFileSessionStorage } from "@remix-run/node";
 
-const { getSession, commitSession, destroySession } =
-  createCookieSessionStorage({
-    // a Cookie from `createCookie` or the CookieOptions to create one
-    cookie: {
-      name: "__session",
+// In this example the Cookie is created separately.
+const sessionCookie = createCookie("__session", {
+  secrets: ["r3m1xr0ck5"],
+  sameSite: "none",
+  httpOnly: true,
+});
 
-      // all of these are optional
-      //   domain: "remix.run",
-      //   expires: new Date(Date.now() + 60_000),
-      //   httpOnly: true,
-      //   maxAge: 60,
-      //   path: "/",
-      //   sameSite: "lax",
-      secrets: ["s3cret1"],
-      //   secure: true,
-    },
-  });
+const { getSession, commitSession, destroySession } = createFileSessionStorage({
+  // The root directory where you want to store the files.
+  // Make sure it's writable!
+  dir: "./__sessionData",
+  cookie: sessionCookie,
+});
 
 export { getSession, commitSession, destroySession };

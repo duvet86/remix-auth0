@@ -20,7 +20,7 @@ const auth0 = {
 
 const sessionStateKey = "oauth2:state";
 const sessionKey = "user";
-const sessionTokenKey = "token";
+export const sessionTokenKey = "token";
 const userInfoURL = `https://${auth0.domain}/userinfo`;
 const scope = "openid profile email";
 const authorizationURL = `https://${auth0.domain}/authorize`;
@@ -149,8 +149,6 @@ export const authorize = async (
   const { accessToken } = await getAccessToken(code, params);
 
   user = await userProfile(accessToken);
-
-  console.log(accessToken);
 
   // Because a callback was not provided, we are going to store the user data
   // on the session and commit it as a cookie.

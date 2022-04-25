@@ -12,6 +12,7 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
+  useLoaderData,
 } from "@remix-run/react";
 import NavigationHeader from "./components/navigation/navigation-header";
 import type { Auth0Profile } from "./services/authorize";
@@ -20,7 +21,6 @@ import { httpGetAsync } from "./services/http";
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
 import type { Site } from "./types";
-import { useUser } from "./utils";
 
 import emptyLogo from "./empty_state.svg";
 
@@ -43,13 +43,13 @@ export const loader: LoaderFunction = async ({ request }) => {
   return authorize(request, async (user) => {
     return json<LoaderData>({
       user,
-      sites: await httpGetAsync("/imt-api/sites"),
+      sites: await httpGetAsync(request, "/imt-api/sites"),
     });
   });
 };
 
 export default function App() {
-  const user = useUser();
+  const { user, sites } = useLoaderData();
 
   return (
     <html lang="en" className="h-full">
@@ -58,7 +58,7 @@ export default function App() {
         <Links />
       </head>
       <body className="h-full">
-        <NavigationHeader user={user} />
+        <NavigationHeader user={user} sites={sites} />
         <Outlet />
         <ScrollRestoration />
         <Scripts />
@@ -70,8 +70,6 @@ export default function App() {
 
 export function CatchBoundary() {
   const caught = useCatch();
-
-  console.error(caught.data);
 
   return (
     <html lang="en" className="h-full">
