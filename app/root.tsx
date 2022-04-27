@@ -3,6 +3,7 @@ import type {
   LoaderFunction,
   MetaFunction,
 } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import {
   Links,
@@ -12,10 +13,8 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
-  useLoaderData,
 } from "@remix-run/react";
 import NavigationHeader from "./components/navigation/navigation-header";
-import type { Auth0Profile } from "./services/authorize";
 import { authorize } from "./services/authorize";
 import { httpGetAsync } from "./services/http";
 
@@ -23,14 +22,7 @@ import tailwindStylesheetUrl from "./styles/tailwind.css";
 import type { Site, UserAuthorisation } from "./types";
 
 import emptyLogo from "./empty_state.svg";
-import SideMenuNavigation from "./components/navigation/side-menu-navigation";
-import { CurrentSiteContextProvider } from "./services/current-site-context";
-
-type LoaderData = {
-  user: Auth0Profile;
-  sites: Site[];
-  initialSelectedSite: Site;
-};
+import type { RootData } from "./utils";
 
 export const links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
@@ -44,14 +36,6 @@ export const meta: MetaFunction = () => ({
 
 export const loader: LoaderFunction = async ({ request }) => {
   return authorize(request, async (user) => {
-    const sites = await httpGetAsync<Site[]>(request, "/imt-api/sites");
-
-    const siteDictionary = sites.reduce<Record<string, Site>>((res, site) => {
-      res[site.siteId] = site;
-
-      return res;
-    }, {});
-
     const userAuthorisation = user._json[
       "https://mining.imdexhub.com/permissions"
     ] as UserAuthorisation;
@@ -61,21 +45,30 @@ export const loader: LoaderFunction = async ({ request }) => {
       throw new Response("Unauthorized", { status: 401 });
     }
 
+    if (new URL(request.url).pathname === "/") {
+      return redirect(`/${siteRoles[0].siteId}`);
+    }
+
+    const sites = await httpGetAsync<Site[]>(request, "/imt-api/sites");
+
+    const siteDictionary = sites.reduce<Record<string, Site>>((res, site) => {
+      res[site.siteId] = site;
+
+      return res;
+    }, {});
+
     const userSites = userAuthorisation.siteRoles.map(
       ({ siteId }) => siteDictionary[siteId]
     );
 
-    return json<LoaderData>({
+    return json<RootData>({
       user,
       sites: userSites,
-      initialSelectedSite: siteDictionary[siteRoles[0].siteId],
     });
   });
 };
 
 export default function App() {
-  const { user, sites, initialSelectedSite } = useLoaderData();
-
   return (
     <html lang="en" className="h-full antialiased">
       <head>
@@ -83,16 +76,7 @@ export default function App() {
         <Links />
       </head>
       <body className="flex h-full flex-col">
-        <CurrentSiteContextProvider initialSiteValue={initialSelectedSite}>
-          <NavigationHeader user={user} sites={sites} />
-          <div className="flex grow">
-            <SideMenuNavigation />
-            <main className="grow p-4">
-              <Outlet />
-            </main>
-          </div>
-        </CurrentSiteContextProvider>
-
+        <Outlet />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

@@ -4,6 +4,11 @@ import { useMemo } from "react";
 import type { Auth0Profile } from "./services/authorize";
 import type { Site } from "./types";
 
+export interface RootData extends Record<string, unknown> {
+  user: Auth0Profile;
+  sites: Site[];
+}
+
 const DEFAULT_REDIRECT = "/";
 
 /**
@@ -46,28 +51,15 @@ export function useMatchesData(
   return route?.data;
 }
 
-export function useUser(): Auth0Profile {
+export function useRootData(): RootData {
   const data = useMatchesData("root");
-  if (data === undefined || !isUser(data.user)) {
+  if (data === undefined) {
     throw new Error("No user found in root loader.");
   }
 
-  return data.user;
-}
-
-export function useSites(): Site[] {
-  const data = useMatchesData("root");
-  if (data === undefined || data.sites == null) {
-    throw new Error("No user found in root loader.");
-  }
-
-  return data.sites as Site[];
+  return data as RootData;
 }
 
 export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
-}
-
-function isUser(user: any): user is Auth0Profile {
-  return user && typeof user === "object" && typeof user.provider === "string";
 }

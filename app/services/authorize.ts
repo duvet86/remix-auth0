@@ -113,8 +113,8 @@ export const logout = async (request: Request) => {
 
 export const authorize = async (
   request: Request,
-  callback: (user: Auth0Profile) => Promise<Response>
-) => {
+  callback: (user: Auth0Profile) => Promise<void | Response>
+): Promise<void | Response> => {
   const session = await getSession(request.headers.get("Cookie"));
 
   let user: Auth0Profile | null = session.get(sessionKey) ?? null;
