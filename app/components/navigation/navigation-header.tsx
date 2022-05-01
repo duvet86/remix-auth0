@@ -12,7 +12,7 @@ interface Props {
 
 export default function NavigationHeader({ user, sites }: Props) {
   return (
-    <header className="divide-y">
+    <header>
       <nav className="flex flex-wrap items-center justify-between bg-imdex-blue p-1 text-white">
         <Link to="/" className="ml-2 mr-6">
           <img width="100" src={logo} alt="logo" />

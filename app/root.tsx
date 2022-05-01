@@ -19,13 +19,18 @@ import { authorize } from "./services/authorize";
 import { httpGetAsync } from "./services/http";
 
 import tailwindStylesheetUrl from "./styles/tailwind.css";
+import styles from "./index.css";
+
 import type { Site, UserAuthorisation } from "./types";
 
 import emptyLogo from "./empty_state.svg";
 import type { RootData } from "./utils";
 
 export const links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: tailwindStylesheetUrl }];
+  return [
+    { rel: "stylesheet", href: tailwindStylesheetUrl },
+    { rel: "stylesheet", href: styles },
+  ];
 };
 
 export const meta: MetaFunction = () => ({

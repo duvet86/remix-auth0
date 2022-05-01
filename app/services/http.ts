@@ -5,12 +5,19 @@ const BASE_URL = "https://api.mining.dev.imdexhub.com";
 
 export async function httpGetAsync<T>(
   request: Request,
-  url: string
+  url: string,
+  queryStringParams = new URLSearchParams()
 ): Promise<T> {
-  return await handleJSONResponeAsync(await handleFetch(request, url));
+  return await handleJSONResponeAsync(
+    await handleFetch(request, url, queryStringParams)
+  );
 }
 
-async function handleFetch(request: Request, url: string) {
+async function handleFetch(
+  request: Request,
+  urlString: string,
+  queryStringParams: URLSearchParams
+) {
   const session = await getSession(request.headers.get("Cookie"));
   const accessToken = session.get(sessionTokenKey);
 
@@ -21,7 +28,10 @@ async function handleFetch(request: Request, url: string) {
   );
   headers.append("Authorization", `token ${accessToken}`);
 
-  return await fetch(BASE_URL + url, {
+  const url = new URL(BASE_URL + urlString);
+  url.search = queryStringParams.toString();
+
+  return await fetch(url.toString(), {
     headers,
   });
 }

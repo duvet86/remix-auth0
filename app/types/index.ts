@@ -49,3 +49,39 @@ export interface UserAuthorisation {
   siteRoles: SiteRole[];
   eulaAcceptanceRequired?: boolean;
 }
+
+export enum OperatingMode {
+  Offline = "Offline",
+  Online = "Online",
+  Logging = "Logging",
+}
+
+export interface BlastDog {
+  blastDogId: string;
+  blastDogName: string;
+  fuelLevelPercentage: number | null;
+  lastLoggedPatternName: string | null;
+  lastUpdateTime: string | null;
+  operator: string | null;
+  status: OperatingMode;
+}
+
+export interface PatternListItem {
+  siteId: string;
+  patternId: string;
+  name: string;
+  bench: string;
+  dateTimeCreatedUtc: string;
+  dateTimeUpdatedUtc: string;
+  hasMergePending: boolean;
+  holeCount: number;
+  isActive: boolean;
+  numberOfHolesToReview: number;
+  percentageLogged: number;
+}
+
+export interface PatternsResponse {
+  totalMatchedPatterns: number;
+  activeMatchedPatterns: number;
+  patterns: PatternListItem[];
+}
